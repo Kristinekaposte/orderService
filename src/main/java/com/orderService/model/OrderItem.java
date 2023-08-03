@@ -21,12 +21,13 @@ public class OrderItem {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
-    @NotNull(message = "Order ID cannot be null")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  //  @NotNull(message = "Order ID cannot be null")
     @ApiModelProperty(notes = "The id of the order", example = "1")
     private Long orderId;
 
     @NotNull(message = "Product ID cannot be null")
-    @ApiModelProperty(notes = "The unique ID of the product", example = "1001")
+    @ApiModelProperty(notes = "The ID of the product", example = "100")
     private Long productId;
 
 

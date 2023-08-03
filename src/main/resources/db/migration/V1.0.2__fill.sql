@@ -1,8 +1,8 @@
 
 INSERT INTO orders (order_number, customer_id, order_date, total_price)
 VALUES
-  ('ORD-123456', 1, '2023-07-20 10:30:00', 1239.92),
-  ('ORD-987654', 2, '2023-07-20 11:45:00', 59.97),
+  ('ORD-123456', 1, '2023-07-20 10:30:00', 1719.92),
+  ('ORD-987654', 2, '2023-07-20 11:45:00', 19.99),
   ('ORD-555444', 3, '2023-07-20 13:15:00', 49.96);
 INSERT INTO order_item (order_id, product_id, item_price, quantity)
 VALUES

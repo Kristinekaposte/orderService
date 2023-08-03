@@ -38,6 +38,6 @@ public class OrderDAO {
     @Column (name = "total_price", nullable = false)
     private Double totalPrice;
 
-    @OneToMany(mappedBy = "orderId",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "orderDAO", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<OrderItemDAO> orderItemDAOList;
 }
