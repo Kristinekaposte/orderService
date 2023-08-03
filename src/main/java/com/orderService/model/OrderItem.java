@@ -1,5 +1,6 @@
 package com.orderService.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -16,14 +17,18 @@ import javax.validation.constraints.Positive;
 @AllArgsConstructor
 @Component
 public class OrderItem {
+    @ApiModelProperty(notes = "The unique ID of the order", example = "1")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Long id;
 
     @NotNull(message = "Order ID cannot be null")
-    @ApiModelProperty(notes = "The unique ID of the order", example = "1")
+    @ApiModelProperty(notes = "The id of the order", example = "1")
     private Long orderId;
 
     @NotNull(message = "Product ID cannot be null")
     @ApiModelProperty(notes = "The unique ID of the product", example = "1001")
     private Long productId;
+
 
     @NotNull(message = "Item price cannot be null")
     @Positive(message = "Item price must be a positive number")

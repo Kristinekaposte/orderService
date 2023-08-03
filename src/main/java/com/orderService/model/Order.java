@@ -1,5 +1,6 @@
 package com.orderService.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -13,12 +14,14 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @ApiModel(description = "Model of Orders")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Component
-public class Orders {
+public class Order {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @ApiModelProperty(notes = "The unique ID of the order", example = "1")
@@ -35,10 +38,13 @@ public class Orders {
 
     @NotNull(message = "Order time cannot be null")
     @ApiModelProperty(notes = "The order time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime orderTime;
 
     @NotNull(message = "Total price cannot be null")
     @Positive(message = "Total price must be a positive number")
     @ApiModelProperty(notes = "The total price of the order", example = "50.25")
     private Double totalPrice;
+
+    private List<OrderItem> orderItems;
 }
