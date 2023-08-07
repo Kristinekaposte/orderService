@@ -61,7 +61,7 @@ public class OrderController {
             @ApiResponse(code = 500, message = "Server error")})
 
     public ResponseEntity<Order> getOrderByOrderNumber(@ApiParam(value = "orderNumber of the order entry", required = true)
-                                                  @PathVariable("orderNumber") String orderNumber) {
+                                                       @PathVariable("orderNumber") String orderNumber) {
         Optional<Order> orderOptional = orderService.findOrderByOrderNumber(orderNumber);
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
@@ -73,19 +73,18 @@ public class OrderController {
                 "Message", "order not found with orderNumber: " + orderNumber).build();
     }
 
-
     @PostMapping("/placeOrder")
-    @ApiOperation(value = "Place a new order",
-            notes = "Creates and places a new order in the DB",
-            response = Order.class)
+    @ApiOperation(value = "Place a new order", notes = "Creates and places a new order in the DB", response = Order.class)
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The order has been successfully placed"),
             @ApiResponse(code = 400, message = "Bad request"),
-            @ApiResponse(code = 500, message = "Server error")})
-    public ResponseEntity<String> placeOrder(@RequestBody @Valid Order order) {
-            orderService.placeOrder(order);
+            @ApiResponse(code = 404, message = "Customer not found"),
+            @ApiResponse(code = 500, message = "Server error")
+    })
+    public ResponseEntity<Order> placeOrder(@RequestBody @Valid Order order) {
+        Order savedOrder = orderService.placeOrder(order);
         log.info("Order placed successfully");
-            return new ResponseEntity<>("Order placed successfully", HttpStatus.CREATED);
-
+        return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
     }
+
 }

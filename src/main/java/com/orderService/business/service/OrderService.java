@@ -10,5 +10,5 @@ public interface OrderService {
 
     Optional<Order> findOrderByOrderNumber(String orderNumber);
 
-    void placeOrder(Order order);
+    Order placeOrder(Order order);
 }

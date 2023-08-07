@@ -6,8 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
@@ -33,5 +35,18 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
                 errors.toString());
         log.info("Seems like validation issue occurred");
         return ResponseEntity.status(status).body(errorResponse);
+    }
+
+
+    @ExceptionHandler(WebClientResponseException.NotFound.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(WebClientResponseException.NotFound ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "Resource not found",
+                ex.getMessage());
+        log.warn("Resource not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 }

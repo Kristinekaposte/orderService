@@ -8,6 +8,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
 
+
+
     @Mapping(source = "orderId", target = "orderDAO.id")
     OrderItemDAO orderItemToDAO(OrderItem orderItem);
 
