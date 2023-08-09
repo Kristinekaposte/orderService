@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
+import java.net.ConnectException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -48,5 +48,17 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
                 ex.getMessage());
         log.warn("Resource not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(ConnectException.class)
+    public ResponseEntity<ErrorResponse> handleConnectException(ConnectException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                "Connection error",
+                "Connection with the service failed. " + ex.getMessage());
+        log.error("Connection error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }

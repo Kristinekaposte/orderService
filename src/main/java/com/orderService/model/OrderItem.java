@@ -30,9 +30,9 @@ public class OrderItem {
     @ApiModelProperty(notes = "The ID of the product", example = "100")
     private Long productId;
 
-
-    @NotNull(message = "Item price cannot be null")
-    @Positive(message = "Item price must be a positive number")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  //  @NotNull(message = "Item price cannot be null")
+   // @Positive(message = "Item price must be a positive number")
     @ApiModelProperty(notes = "The price of the item", example = "12.50")
     private Double itemPrice;
 

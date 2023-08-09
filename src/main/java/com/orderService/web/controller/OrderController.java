@@ -74,17 +74,23 @@ public class OrderController {
     }
 
     @PostMapping("/placeOrder")
-    @ApiOperation(value = "Place a new order", notes = "Creates and places a new order in the DB", response = Order.class)
+    @ApiOperation(value = "Place a new order",
+            notes = "Creates and places a new order in the DB",
+            response = Order.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "The order has been successfully placed"),
+            @ApiResponse(code = 201, message = "The request has create successfully"),
             @ApiResponse(code = 400, message = "Bad request"),
-            @ApiResponse(code = 404, message = "Customer not found"),
+            @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI"),
             @ApiResponse(code = 500, message = "Server error")
     })
     public ResponseEntity<Order> placeOrder(@RequestBody @Valid Order order) {
-        Order savedOrder = orderService.placeOrder(order);
-        log.info("Order placed successfully");
-        return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
+        Order response = orderService.placeOrder(order);
+        if (response != null) {
+            log.info("Order placed successfully");
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
+            log.warn("Order placement failed");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).header(
+                    "Message", "Order placement failed some products does not exist.").build();
     }
-
 }
