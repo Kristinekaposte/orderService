@@ -3,6 +3,7 @@ package com.orderService.web.controller;
 import com.orderService.business.service.OrderService;
 import com.orderService.model.Order;
 import com.orderService.swagger.DescriptionVariables;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -74,6 +75,7 @@ public class OrderController {
     }
 
     @PostMapping("/placeOrder")
+    @CircuitBreaker(name = "OrderService", fallbackMethod ="fallbackMethod" )
     @ApiOperation(value = "Place a new order",
             notes = "Creates and places a new order in the DB",
             response = Order.class)
@@ -92,5 +94,11 @@ public class OrderController {
             log.warn("Order placement failed");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).header(
                     "Message", "Order placement failed some products does not exist.").build();
+    }
+
+    public ResponseEntity<Order> fallbackMethod (Order order, RuntimeException runtimeException){
+        log.warn("Something went wrong, FallBack was called " + runtimeException.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).header(
+                "Message", "Order placement failed something went wrong. Please try again later.").build();
     }
 }

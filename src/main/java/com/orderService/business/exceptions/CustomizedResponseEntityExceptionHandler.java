@@ -50,15 +50,15 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
-    @ExceptionHandler(ConnectException.class)
-    public ResponseEntity<ErrorResponse> handleConnectException(ConnectException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Connection error",
-                "Connection with the service failed. " + ex.getMessage());
-        log.error("Connection error: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-    }
+//    @ExceptionHandler(ConnectException.class)
+//    public ResponseEntity<ErrorResponse> handleConnectException(ConnectException ex) {
+//        ErrorResponse errorResponse = new ErrorResponse(
+//                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+//                "Connection error",
+//                "Connection with the service failed. " + ex.getMessage());
+//        log.error("Connection error: {}", ex.getMessage());
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//    }
 }
