@@ -4,17 +4,14 @@ import com.orderService.business.mappers.OrderMapper;
 import com.orderService.business.repository.OrderRepository;
 import com.orderService.business.repository.model.OrderDAO;
 import com.orderService.business.service.OrderService;
+import com.orderService.client.Client;
 import com.orderService.model.Order;
 import com.orderService.model.OrderItem;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,11 +27,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
-
     @Autowired
     private OrderMapper orderMapper;
     @Autowired
-    private WebClient webClient;
+    private Client client;
 
     @Override
     public List<Order> getAllOrders() {
@@ -62,10 +58,10 @@ public class OrderServiceImpl implements OrderService {
     public Order placeOrder(Order order) {
         autogenerateOrderNumber(order);
         autogenerateOrderTime(order);
-        ResponseEntity<Object> customerResponse = checkCustomerExistence(order.getCustomerId());
+        ResponseEntity<Object> customerResponse = client.checkCustomerExistence(order.getCustomerId());
         if (customerResponse.getStatusCode() == HttpStatus.OK) {
             List<Long> productIds = getProductIds(order);
-            ResponseEntity<Map<Long, Double>> productInfoResponse = getProductInfo(productIds);
+            ResponseEntity<Map<Long, Double>> productInfoResponse = client.getProductInfo(productIds);
             if (productInfoResponse.getStatusCode() == HttpStatus.OK) {
                 Map<Long, Double> productInfo = productInfoResponse.getBody();
                 if (productInfo.keySet().containsAll(productIds)) {
@@ -73,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
                     setOrderDAOForOrderItems(orderDAO, productInfo);
                     calculateOrderTotalPrice(order, orderDAO, productInfo);
                     Order savedOrder = saveOrder(orderDAO);
-                    log.info("Order placed successfully");
+                    log.info("Order placed" + savedOrder);
                     return savedOrder;
                 } else {
                     List<Long> existingProductList = new ArrayList<>(productInfo.keySet());
@@ -81,22 +77,10 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
         }
+        log.info("Order not placed");
         return null;
     }
 
-    /**
-     * Checks if a customer with the given ID exists from CustomerService endpoint.
-     *
-     * @param customerId The customer id to check.
-     * @return ResponseEntity containing info about if customer was found by id.
-     */
-    private ResponseEntity<Object> checkCustomerExistence(Long customerId) {
-        return webClient.get()
-                .uri("http://localhost:5050/api/v1/customer/getById/{id}", customerId)
-                .retrieve()
-                .toEntity(Object.class)
-                .block();
-    }
 
     /**
      * Extracts the productIds from the order's orderItems.
@@ -104,29 +88,10 @@ public class OrderServiceImpl implements OrderService {
      * @param order The order from which to extract product IDs.
      * @return List of productIds.
      */
-    private List<Long> getProductIds(Order order) {
+    public List<Long> getProductIds(Order order) {
         return order.getOrderItems().stream()
                 .map(OrderItem::getProductId)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Checks the existence of the productIds in the products service.
-     *
-     * @param productIds The list of productIds to check.
-     * @return A ResponseEntity containing the list of existing productIds.
-     */
-
-    private ResponseEntity<Map<Long, Double>> getProductInfo(List<Long> productIds) {
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString("http://localhost:5051/api/v1/products/getProductInfo")
-                .queryParam("productIds", productIds);
-
-        return webClient.get()
-                .uri(uriBuilder.toUriString())
-                .retrieve()
-                .toEntity(new ParameterizedTypeReference<Map<Long, Double>>() {
-                })
-                .block();
     }
 
     /**
@@ -136,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
      * @return The created OrderDAO object.
      */
 
-    private OrderDAO createOrderDAO(Order order, Map<Long, Double> productInfo) {
+    public OrderDAO createOrderDAO(Order order, Map<Long, Double> productInfo) {
         OrderDAO orderDAO = orderMapper.orderToDAO(order);
         setOrderDAOForOrderItems(orderDAO, productInfo);
         return orderDAO;
@@ -149,7 +114,7 @@ public class OrderServiceImpl implements OrderService {
      * @param orderDAO The OrderDAO object to which to set OrderItemDAOs.
      */
 
-    private void setOrderDAOForOrderItems(OrderDAO orderDAO, Map<Long, Double> productInfo) {
+    public void setOrderDAOForOrderItems(OrderDAO orderDAO, Map<Long, Double> productInfo) {
         if (orderDAO.getOrderItemDAOList() != null) {
             orderDAO.getOrderItemDAOList().forEach(item -> {
                 item.setOrderDAO(orderDAO);
@@ -164,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
      * @param orderDAO The OrderDAO object to be saved.
      * @return The Order object after saving.
      */
-    private Order saveOrder(OrderDAO orderDAO) {
+    public Order saveOrder(OrderDAO orderDAO) {
         return orderMapper.daoToOrder(orderRepository.save(orderDAO));
     }
 
@@ -174,7 +139,7 @@ public class OrderServiceImpl implements OrderService {
      * @param productIds       The list of productIds that were not found.
      * @param existingProducts The list of existing productIds.
      */
-    private void handleMissingProducts(List<Long> productIds, List<Long> existingProducts) {
+    public void handleMissingProducts(List<Long> productIds, List<Long> existingProducts) {
         List<Long> missingProducts = new ArrayList<>(productIds);
         missingProducts.removeAll(existingProducts);
         log.warn("COULD NOT PLACE ORDER, SOME PRODUCTS ID'S DON'T EXIST: {}", missingProducts);
@@ -185,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param order Order object for which to generate the OrderNumber.
      */
-    private void autogenerateOrderNumber(Order order) {
+    public void autogenerateOrderNumber(Order order) {
         String orderNumber = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         order.setOrderNumber(orderNumber);
     }
@@ -195,7 +160,7 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param order The Order object for which to set the OrderTime.
      */
-    private void autogenerateOrderTime(Order order) {
+    public void autogenerateOrderTime(Order order) {
         order.setOrderTime(LocalDateTime.now());
     }
 
@@ -207,7 +172,7 @@ public class OrderServiceImpl implements OrderService {
      * @param orderDAO OrderDAO in which to set the calculated total price.
      */
 
-    private void calculateOrderTotalPrice(Order order, OrderDAO orderDAO, Map<Long, Double> productInfo) {
+    public void calculateOrderTotalPrice(Order order, OrderDAO orderDAO, Map<Long, Double> productInfo) {
         double totalPrice = order.getOrderItems().stream()
                 .mapToDouble(item -> productInfo.get(item.getProductId()) * item.getQuantity())
                 .sum();

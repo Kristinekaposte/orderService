@@ -5,6 +5,7 @@ import com.orderService.business.mappers.OrderMapper;
 import com.orderService.business.repository.OrderRepository;
 import com.orderService.business.repository.model.OrderDAO;
 import com.orderService.business.repository.model.OrderItemDAO;
+import com.orderService.client.Client;
 import com.orderService.model.Order;
 import com.orderService.model.OrderItem;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,21 +14,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
@@ -38,29 +32,73 @@ public class OrderServiceImplTest {
     private OrderMapper orderMapper;
     @Mock
     private OrderItemMapper orderItemMapper;
+    @Mock
+    private Client client;
     @InjectMocks
     private OrderServiceImpl orderService;
-
-    private List<OrderItemDAO> orderItemDAOList;
     private OrderDAO orderDAO;
     private OrderItemDAO orderItemDAO;
+    private List<OrderItemDAO> orderItemDAOList;
     private List<OrderDAO> orderDAOList;
-    //___________________order___________________
+    private OrderItem orderItem;
     private List<OrderItem> orderItemList;
     private Order order;
-    private OrderItem orderItem;
+
 
     @BeforeEach
     public void init() {
+        orderDAO = createOrderDAO(orderItemDAOList);
         orderItemDAO = createOrderItemDAO(orderDAO);
         orderItemDAOList = createOrderItemDAOList(orderItemDAO);
-        orderDAO = createOrderDAO(orderItemDAOList);
-        orderDAOList =createOrderDAOList(orderDAO);
-        //____________________________________________
-        orderItem = createOrderItem(order);
+        orderDAOList = createOrderDAOList(orderDAO);
+        orderItem = createOrderItem();
         orderItemList = createOrderItemList(orderItem);
         order = createOrder(orderItemList);
 
+    }
+
+    private OrderDAO createOrderDAO(List<OrderItemDAO> orderItemDAOList) {
+        return new OrderDAO(1L, "ORD-12345678", 1L, LocalDateTime.now(), 20.00, orderItemDAOList);
+    }
+
+    private OrderItemDAO createOrderItemDAO(OrderDAO orderDAO) {
+        return new OrderItemDAO(1L, orderDAO, 2L, 10.00, 2);
+    }
+
+    private List<OrderItemDAO> createOrderItemDAOList(OrderItemDAO orderItemDAO) {
+        List<OrderItemDAO> list = new ArrayList<>();
+        list.add(orderItemDAO);
+        return list;
+    }
+
+    private List<OrderDAO> createOrderDAOList(OrderDAO orderDAO) {
+        List<OrderDAO> list = new ArrayList<>();
+        list.add(orderDAO);
+        list.add(orderDAO);
+        return list;
+    }
+
+    private Order createOrder(List<OrderItem> orderItemList) {
+        return new Order(1L, "ORD-12345678", 1L, LocalDateTime.now(), 20.00, orderItemList);
+    }
+
+    private OrderItem createOrderItem() {
+        return new OrderItem(1L, 1L, 2L, 10.00, 2);
+    }
+
+    private List<OrderItem> createOrderItemList(OrderItem orderItem) {
+        List<OrderItem> list = new ArrayList<>();
+        list.add(orderItem);
+        return list;
+    }
+
+    @Test
+    void placeOrderWhenCustomerDoesNotExist() {
+        ResponseEntity<Object> customerResponse = ResponseEntity.notFound().build();
+        when(client.checkCustomerExistence(anyLong())).thenReturn(customerResponse);
+        Order result = orderService.placeOrder(order);
+        assertNull(result);
+        verify(client, times(1)).checkCustomerExistence(anyLong());
     }
 
     @Test
@@ -99,42 +137,4 @@ public class OrderServiceImplTest {
         assertFalse(result.isPresent());
         verify(orderRepository, times(1)).findByOrderNumber(anyString());
     }
-
-
-    private OrderDAO createOrderDAO(List<OrderItemDAO> orderItemDAOList) {
-        return new OrderDAO(1L, "ORD-12345678", 1L, LocalDateTime.now(), 20.00, orderItemDAOList);
-    }
-
-    private OrderItemDAO createOrderItemDAO(OrderDAO orderDAO) {
-        return new OrderItemDAO(1L,orderDAO,2L,10.00,2);
-    }
-
-    private List<OrderItemDAO> createOrderItemDAOList(OrderItemDAO orderItemDAO) {
-        List<OrderItemDAO> list = new ArrayList<>();
-        list.add(orderItemDAO);
-        return list;
-    }
-
-    private List<OrderDAO> createOrderDAOList(OrderDAO orderDAO) {
-        List<OrderDAO> list = new ArrayList<>();
-        list.add(orderDAO);
-        list.add(orderDAO);
-        return list;
-    }
-    // ORDER
-
-    private Order createOrder(List<OrderItem> orderItemList) {
-        return new Order(1L, "ORD-12345678", 1L, LocalDateTime.now(), 20.00, orderItemList);
-    }
-
-    private OrderItem createOrderItem(Order order) {
-        return new OrderItem(1L,1L,2L,10.00,2);
-    }
-
-    private List<OrderItem> createOrderItemList(OrderItem orderItem) {
-        List<OrderItem> list = new ArrayList<>();
-        list.add(orderItem);
-        return list;
-    }
-
 }
